@@ -43,21 +43,52 @@ function App() {
   }
 
   if (error) {
+    const isProd = import.meta.env.PROD;
     return (
       <div className="app-loading">
         <h1>Spotify Moment</h1>
         <p className="error">{error}</p>
-        <p className="hint">
-          Make sure the <strong>backend</strong> is running on port 3001.
-        </p>
-        <pre className="hint-code">{`cd spotify-moment
+        {isProd ? (
+          <p className="hint">
+            Check <strong>VITE_API_URL</strong> in Vercel env vars (your Railway URL) and{' '}
+            <strong>CLIENT_URL</strong> on Railway (your Vercel URL). Redeploy both after changing.
+          </p>
+        ) : (
+          <>
+            <p className="hint">
+              Make sure the <strong>backend</strong> is running on port 3001.
+            </p>
+            <pre className="hint-code">{`cd spotify-moment
 npm run dev`}</pre>
-        <p className="hint">Or run server + client in two terminals — see README.</p>
+          </>
+        )}
+        <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
+          Retry
+        </button>
       </div>
     );
   }
 
-  if (!state || !nowPlaying) return null;
+  if (!state?.recommendations?.length) {
+    return (
+      <div className="app-loading">
+        <h1>Spotify Moment</h1>
+        <p className="error">No tracks returned from the API.</p>
+        <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!nowPlaying) {
+    return (
+      <div className="app-loading">
+        <div className="spinner" />
+        <p>Loading queue…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">

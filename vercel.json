@@ -1,0 +1,7 @@
+{
+  "installCommand": "npm install --prefix spotify-moment/client",
+  "buildCommand": "npm run build --prefix spotify-moment/client",
+  "outputDirectory": "spotify-moment/client/dist",
+  "framework": "vite",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
