@@ -67,7 +67,7 @@ flowchart TB
 | Data | Static JSON (~25 tracks, 5–8 artists with repeats for fatigue demo) |
 
 Skip for MVP: Spotify API, auth, database, tests.  
-**Deploy (Phases 5–6):** Backend on Railway, frontend on Vercel — see [implementation.md](./implementation.md#9-phase-5--deploy-backend-on-railway).
+**Deploy (Phases 5–6):** Backend on Render, frontend on Vercel — see [implementation.md](./implementation.md#9-phase-5--deploy-backend-on-render).
 
 ---
 
@@ -485,7 +485,7 @@ const refine = (text) => postRefine({ text });
 | 6 | **Phase 4** UI — skeleton | 30 min | Layout + wire API |
 | 7 | **Phase 4** UI — showcase polish | 60 min | All indicators, animations, copy |
 | 8 | Run demo script end-to-end | 15 min | Reviewer-ready |
-| 9 | **Phase 5** — Railway backend | 20–30 min | Public API URL + health check |
+| 9 | **Phase 5** — Render backend | 30–45 min | Public API URL + health check |
 | 10 | **Phase 6** — Vercel frontend | 20–30 min | Shareable demo link |
 
 **Total: ~4–6 hrs** for full showcase (+ ~1 hr for deployment).  
@@ -493,20 +493,21 @@ const refine = (text) => postRefine({ text });
 
 ---
 
-## Phase 5 — Deploy backend on Railway · ~20–30 min
+## Phase 5 — Deploy backend on Render · ~30–45 min
 
 **Goal:** Host Express API on HTTPS so reviewers don't need localhost.
 
 | Item | Detail |
 |------|--------|
-| Platform | [Railway](https://railway.app) Web Service (Node) |
+| Platform | [Render](https://render.com) Web Service (Node) |
+| Blueprint | `render.yaml` at repo root |
 | Root dir | `spotify-moment/server` |
-| Config | `spotify-moment/server/railway.json` |
 | Start | `npm start` |
+| Health | `/health` |
 | Env | `OPENAI_API_KEY`, `CLIENT_URL` (Vercel URL after Phase 6) |
-| Verify | `GET /api/health`, `POST /api/session/start` |
+| Verify | `GET /health`, `POST /api/session/start` |
 
-**Caveats for demo:** In-memory sessions lost on redeploy.
+**Caveats for demo:** Free tier cold starts (~30s); in-memory sessions lost on restart.
 
 ---
 
@@ -519,16 +520,16 @@ const refine = (text) => postRefine({ text });
 | Platform | [Vercel](https://vercel.com) (Vite preset) |
 | Root dir | `spotify-moment/client` |
 | Build | `npm run build` → `dist` |
-| Env | `VITE_API_URL=https://your-api.up.railway.app` |
-| Verify | App loads queue; Network tab shows Railway API calls |
+| Env | `VITE_API_URL=https://your-api.onrender.com` |
+| Verify | App loads queue; Network tab shows Render API calls |
 
-**Order:** Deploy Railway first → copy URL into Vercel → set `CLIENT_URL` on Railway.
+**Order:** Deploy Render first → copy URL into Vercel → set `CLIENT_URL` on Render.
 
 ```mermaid
 flowchart LR
     Browser --> Vercel[Vercel CDN]
-    Vercel -->|HTTPS| Railway[Railway API]
-    Railway --> OpenAI[LLM]
+    Vercel -->|HTTPS| Render[Render API]
+    Render --> OpenAI[LLM]
 ```
 
 ---
@@ -572,7 +573,7 @@ Use before demo:
 - User accounts / persistent sessions across refresh
 - Real audio playback (mock progress bar is enough for MVP)
 - Mobile app / pixel-perfect Spotify clone (match kit *patterns*, not every screen)
-- Production hardening (rate limits, Redis, tests) — basic Railway/Vercel deploy is in scope (Phases 5–6)
+- Production hardening (rate limits, Redis, tests) — basic Render/Vercel deploy is in scope (Phases 5–6)
 
 ---
 

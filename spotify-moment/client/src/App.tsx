@@ -51,8 +51,8 @@ function App() {
         {isProd ? (
           <>
             <p className="hint">
-              <strong>VITE_API_URL</strong> = Railway base URL only (no <code>/api</code> suffix).
-              Example: <code>https://your-app.up.railway.app</code>
+              <strong>VITE_API_URL</strong> = Render base URL only (no <code>/api</code> suffix).
+              Example: <code>https://your-app.onrender.com</code>
             </p>
             <p className="hint">
               Test in browser: <code>{import.meta.env.VITE_API_URL || '…'}/api/health</code>

@@ -1,6 +1,6 @@
 import type { SessionResponse } from '../types/session';
 
-/** Dev: empty → Vite proxy `/api`. Prod: set VITE_API_URL on Vercel (Railway backend URL). */
+/** Dev: empty → Vite proxy `/api`. Prod: set VITE_API_URL on Vercel (Render backend URL). */
 function normalizeApiRoot(raw: string | undefined): string {
   return (raw ?? '').trim().replace(/^["']|["']$/g, '').replace(/\/$/, '');
 }
@@ -10,12 +10,12 @@ const API_ROOT = normalizeApiRoot(import.meta.env.VITE_API_URL);
 function apiBase(): string {
   if (import.meta.env.PROD && !API_ROOT) {
     throw new Error(
-      'VITE_API_URL is not set. In Vercel → Project → Settings → Environment Variables, add your Railway URL (e.g. https://your-app.up.railway.app), then redeploy.'
+      'VITE_API_URL is not set. In Vercel → Project → Settings → Environment Variables, add your Render URL (e.g. https://your-app.onrender.com), then redeploy.'
     );
   }
   if (API_ROOT.endsWith('/api')) {
     throw new Error(
-      'VITE_API_URL should be your Railway base URL only (e.g. https://your-app.up.railway.app) — do not include /api.'
+      'VITE_API_URL should be your Render base URL only (e.g. https://your-app.onrender.com) — do not include /api.'
     );
   }
   return `${API_ROOT}/api/session`;
@@ -24,7 +24,7 @@ function apiBase(): string {
 function formatApiError(status: number, statusText: string, text: string, url: string): string {
   if (!text.trim()) {
     if (status === 502 || status === 503 || status === 504) {
-      return `Backend unavailable (${status}). Railway may be waking up — wait 30s and click Retry.\n\nURL: ${url}`;
+      return `Backend unavailable (${status}). Render may be waking up — wait 30s and click Retry.\n\nURL: ${url}`;
     }
     return `Backend returned ${status} ${statusText} with an empty body. Check VITE_API_URL.\n\nURL: ${url}`;
   }
