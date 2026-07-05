@@ -1,7 +1,7 @@
 # Spotify Moment — Implementation Guide
 
 > Step-by-step build guide for all phases in [architecture.md](./architecture.md).  
-> **Order:** Scaffold → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 (Render) → Phase 6 (Vercel).
+> **Order:** Scaffold → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 (Railway) → Phase 6 (Vercel).
 
 ---
 
@@ -15,7 +15,7 @@
 6. [Phase 3 — Repetition Fatigue](#6-phase-3--repetition-fatigue)
 7. [UI design system (Figma)](#7-ui-design-system-figma)
 8. [Phase 4 — Frontend UI showcase](#8-phase-4--frontend-ui-showcase)
-9. [Phase 5 — Deploy backend on Render](#9-phase-5--deploy-backend-on-render)
+9. [Phase 5 — Deploy backend on Railway](#9-phase-5--deploy-backend-on-railway)
 10. [Phase 6 — Deploy frontend on Vercel](#10-phase-6--deploy-frontend-on-vercel)
 11. [Environment & run commands](#11-environment--run-commands)
 12. [API testing (curl)](#12-api-testing-curl)
@@ -1582,158 +1582,130 @@ export default function App() {
 
 ---
 
-## 9. Phase 5 — Deploy backend on Render
+## 9. Phase 5 — Deploy backend on Railway
 
-**Time:** ~30–45 min  
+**Time:** ~20–30 min  
 **Goal:** Express API live on a public HTTPS URL; health check passes; CORS allows your Vercel frontend.
 
-**Deploy backend first** — the frontend needs `VITE_API_URL` pointing at the Render URL.
+**Deploy backend first** — the frontend needs `VITE_API_URL` pointing at your Railway URL.
 
 ### Step 9.1 — Prep the server for production
 
-Render sets `PORT` automatically. The server already uses `process.env.PORT || 3001`.
+Railway injects `PORT` automatically. The server binds `0.0.0.0` and uses `process.env.PORT`.
 
-**`server/index.ts` — CORS for production**
-
-Allow localhost in dev, your Vercel URL in prod, and any `*.vercel.app` preview:
+**`server/index.ts`** — listen on all interfaces (required for containers):
 
 ```typescript
-const allowedOrigins = new Set(
-  (process.env.CLIENT_URL ?? '')
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
-);
+const PORT = Number(process.env.PORT) || 3001;
+const HOST = process.env.HOST ?? '0.0.0.0';
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
-      if (allowedOrigins.has(origin)) return callback(null, true);
-      if (/^https:\/\/[\w-]+\.vercel\.app$/.test(origin)) return callback(null, true);
-      callback(null, false);
-    },
-  })
-);
+app.listen(PORT, HOST, () => {
+  console.log(`Server listening on ${HOST}:${PORT}`);
+});
 ```
 
-**`server/package.json`** — start script (already present):
+**`server/package.json`** — `tsx` is a **production** dependency (Railway runs `npm start`):
 
 ```json
 {
+  "engines": { "node": ">=20" },
   "scripts": {
     "dev": "tsx watch index.ts",
     "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "tsx": "^4.19.3"
   }
 }
 ```
 
-> **Note:** In-memory sessions reset when Render restarts or spins down (free tier). Fine for MVP demos.
+**`server/railway.json`** — config-as-code (health check + watch paths):
+
+```json
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "watchPatterns": ["spotify-moment/server/**"]
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
+```
+
+> **Note:** In-memory sessions reset when Railway redeploys or restarts. Fine for MVP demos.
 
 ### Step 9.2 — Push to GitHub
 
-Render deploys from a Git repo. Ensure `server/.env` is **not** committed (use `.gitignore`).
+Railway deploys from Git. Ensure `server/.env` is **not** committed.
 
 ```bash
-git add spotify-moment/server
-git commit -m "Prepare server for Render deployment"
+git add .
+git commit -m "Add Railway deployment config"
 git push origin main
 ```
 
-### Step 9.3 — Create Render Web Service
+### Step 9.3 — Create Railway service
 
-1. Go to [render.com](https://render.com) → **New** → **Web Service**.
-2. Connect your GitHub repo.
-3. Configure:
+1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**.
+2. Select [Spotify-Moments-MVP](https://github.com/tejas2904-RM/Spotify-Moments-MVP).
+3. Open the new service → **Settings**:
 
 | Setting | Value |
 |---------|-------|
-| **Name** | `spotify-moment-api` (or similar) |
-| **Region** | Closest to you / reviewers |
-| **Root Directory** | `spotify-moment/server` (if repo root is `Spotify-MVP`) or `server` (if repo root is `spotify-moment`) |
-| **Runtime** | Node |
-| **Build Command** | `npm install` |
-| **Start Command** | `npm start` |
-| **Instance type** | Free (cold starts ~30s after idle) |
+| **Root Directory** | `spotify-moment/server` |
+| **Config file path** | `/spotify-moment/server/railway.json` (if not auto-detected) |
+| **Start Command** | `npm start` (set in `railway.json` or leave to Nixpacks/Railpack) |
 
-4. **Environment variables** (Render dashboard → Environment):
+4. **Variables** tab → add:
 
 | Key | Value |
 |-----|-------|
-| `OPENAI_API_KEY` | Your OpenAI key (optional; fallback works without it) |
+| `OPENAI_API_KEY` | Your OpenAI key (optional; keyword fallback works without it) |
 | `CLIENT_URL` | Leave blank for now; set after Vercel deploy (Step 10.4) |
-| `NODE_VERSION` | `20` (optional, recommended) |
 
-5. Click **Create Web Service** and wait for the first deploy.
+5. **Settings → Networking → Generate Domain** to get a public URL like `https://spotify-moment-api.up.railway.app`.
+
+6. Wait for deploy to succeed (green health check on `/api/health`).
 
 ### Step 9.4 — Verify backend
 
-Replace `YOUR-SERVICE` with your Render hostname:
+Replace `YOUR-SERVICE` with your Railway domain:
 
 ```bash
-curl https://YOUR-SERVICE.onrender.com/api/health
+curl https://YOUR-SERVICE.up.railway.app/api/health
 # → {"ok":true,"service":"spotify-moment"}
 
-curl -X POST https://YOUR-SERVICE.onrender.com/api/session/start \
+curl -X POST https://YOUR-SERVICE.up.railway.app/api/session/start \
   -H "Content-Type: application/json" \
   -d '{"deviceType":"desktop"}'
 # → JSON with recommendations array
 ```
 
-**Save this URL** — you need it for Phase 6:
+**Save this URL** for Phase 6:
 
 ```
-https://YOUR-SERVICE.onrender.com
+https://YOUR-SERVICE.up.railway.app
 ```
 
-### Step 9.5 — Optional: `render.yaml` (Blueprint)
-
-Render looks for **`render.yaml` at the repository root** by default (not inside `server/`).
-
-The repo includes **`render.yaml`** at the root with `rootDir: spotify-moment/server`:
-
-```yaml
-services:
-  - type: web
-    name: spotify-moment-api
-    runtime: node
-    rootDir: spotify-moment/server
-    buildCommand: npm install
-    startCommand: npm start
-    envVars:
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: CLIENT_URL
-        sync: false
-      - key: NODE_VERSION
-        value: "20"
-```
-
-**Create the Blueprint in Render:**
-
-1. Dashboard → **New** → **Blueprint**
-2. Connect [Spotify-Moments-MVP](https://github.com/tejas2904-RM/Spotify-Moments-MVP)
-3. **Blueprint Path:** leave as `render.yaml` (repo root) — or set `spotify-moment/server/render.yaml` only if you keep a copy there
-4. Apply → add `OPENAI_API_KEY` when prompted
-
-> **Manual Web Service (no Blueprint):** skip `render.yaml`; set **Root Directory** to `spotify-moment/server` in the service settings instead.
-
-### Step 9.6 — Phase 5 verification
+### Step 9.5 — Phase 5 verification
 
 | Test | Expected |
 |------|----------|
 | `GET /api/health` | `200`, `{ ok: true }` |
 | `POST /api/session/start` | `200`, 12 recommendations |
-| Render logs | No crash on startup; `Server http://localhost:PORT` |
-| Cold start (free tier) | First request after idle may take 30–60s |
+| Railway logs | `Server listening on 0.0.0.0:PORT` |
+| Deploy | Health check passes within 120s |
 
 ---
 
 ## 10. Phase 6 — Deploy frontend on Vercel
 
 **Time:** ~20–30 min  
-**Goal:** React app on a public URL; API calls hit your Render backend.
+**Goal:** React app on a public URL; API calls hit your Railway backend.
 
 ### Step 10.1 — Prep the client for production
 
@@ -1745,12 +1717,12 @@ const BASE = `${API_ROOT}/api/session`;
 ```
 
 - **Local dev:** `VITE_API_URL` unset → requests go to `/api/session` → Vite proxy → `localhost:3001`.
-- **Production:** `VITE_API_URL=https://YOUR-SERVICE.onrender.com` → full URL to Render.
+- **Production:** `VITE_API_URL=https://YOUR-SERVICE.up.railway.app` → full URL to Railway.
 
 **`client/.env.example`**
 
 ```env
-# VITE_API_URL=https://spotify-moment-api.onrender.com
+# VITE_API_URL=https://spotify-moment-api.up.railway.app
 ```
 
 **`client/vercel.json`** — SPA fallback (React Router / client-side routes):
@@ -1779,7 +1751,7 @@ const BASE = `${API_ROOT}/api/session`;
 
 | Key | Value |
 |-----|-------|
-| `VITE_API_URL` | `https://YOUR-SERVICE.onrender.com` (no trailing slash) |
+| `VITE_API_URL` | `https://YOUR-SERVICE.up.railway.app` (no trailing slash) |
 
 5. Deploy.
 
@@ -1787,11 +1759,11 @@ const BASE = `${API_ROOT}/api/session`;
 
 1. Open your Vercel URL (e.g. `https://spotify-moment.vercel.app`).
 2. App should load and show a track queue (not "connection error").
-3. Open browser DevTools → Network → confirm requests go to `https://YOUR-SERVICE.onrender.com/api/session/start`.
+3. Open browser DevTools → Network → confirm requests go to `https://YOUR-SERVICE.up.railway.app/api/session/start`.
 
-### Step 10.4 — Wire CORS (Render ← Vercel)
+### Step 10.4 — Wire CORS (Railway ← Vercel)
 
-Back in **Render** → your web service → **Environment**:
+Back in **Railway** → your service → **Variables**:
 
 | Key | Value |
 |-----|-------|
@@ -1803,7 +1775,7 @@ Add preview URLs if needed (comma-separated):
 https://spotify-moment.vercel.app,https://spotify-moment-git-main-you.vercel.app
 ```
 
-Render redeploys automatically. The server also allows any `https://*.vercel.app` origin for preview deployments.
+Railway redeploys automatically. The server also allows any `https://*.vercel.app` origin for preview deployments.
 
 ### Step 10.5 — End-to-end demo checklist
 
@@ -1812,14 +1784,14 @@ Render redeploys automatically. The server also allows any `https://*.vercel.app
 - [ ] Refine panel works
 - [ ] Discovery badge on 4th track
 - [ ] Analysis overlay appears on signal
-- [ ] Share **Vercel URL** with reviewers (not Render URL)
+- [ ] Share **Vercel URL** with reviewers (not the Railway API URL)
 
 ### Step 10.6 — Phase 6 verification
 
 | Test | Expected |
 |------|----------|
 | Vercel homepage | Loads UI, not blank / error screen |
-| Network tab | `POST` to Render `/api/session/start` → `200` |
+| Network tab | `POST` to Railway `/api/session/start` → `200` |
 | CORS | No `Access-Control-Allow-Origin` errors |
 | Preview deploy | Works if `*.vercel.app` allowed or listed in `CLIENT_URL` |
 
@@ -1828,16 +1800,16 @@ Render redeploys automatically. The server also allows any `https://*.vercel.app
 ```mermaid
 flowchart LR
     User[Reviewer browser] --> Vercel[Vercel — static React]
-    Vercel -->|VITE_API_URL| Render[Render — Express API]
-    Render --> LLM[OpenAI API]
-    Render --> JSON[(tracks.json in memory)]
+    Vercel -->|VITE_API_URL| Railway[Railway — Express API]
+    Railway --> LLM[OpenAI API]
+    Railway --> JSON[(tracks.json in memory)]
 ```
 
 | Layer | Host | URL pattern |
 |-------|------|-------------|
 | Frontend | Vercel | `https://*.vercel.app` |
-| Backend | Render | `https://*.onrender.com` |
-| LLM key | Render env only | Never in Vercel |
+| Backend | Railway | `https://*.up.railway.app` |
+| LLM key | Railway env only | Never in Vercel |
 
 ---
 
@@ -1934,11 +1906,11 @@ curl -s http://localhost:3001/api/session | jq '.insightBanner, .recommendations
 
 | Issue | Fix |
 |-------|-----|
-| CORS error | Ensure `cors({ origin: 'http://localhost:5173' })` on server locally; in prod set `CLIENT_URL` on Render |
-| CORS error on Vercel | `VITE_API_URL` must be Render HTTPS URL; redeploy Vercel after env change |
+| CORS error | Ensure `CLIENT_URL` is set on Railway; `*.vercel.app` is allowed by default |
+| CORS error on Vercel | `VITE_API_URL` must be Railway HTTPS URL; redeploy Vercel after env change |
 | Frontend shows connection error | Backend not running locally, or `VITE_API_URL` wrong / missing on Vercel |
-| Render cold start | Free tier sleeps after ~15 min idle; first request takes 30–60s |
-| Session resets on refresh | In-memory store — expected for MVP; use Redis only if you extend beyond demo |
+| Railway deploy fails | Set **Root Directory** to `spotify-moment/server`; check logs for missing `tsx` |
+| Session resets on refresh | In-memory store — expected for MVP |
 | `VITE_API_URL` not applied | Vite bakes env at build time — redeploy Vercel after changing the variable |
 | LLM returns invalid JSON | Use `response_format: json_object` (OpenAI) or tighten system prompt |
 | No API key | Fallback keywords still work for refine; template reasons used |
@@ -1958,7 +1930,7 @@ curl -s http://localhost:3001/api/session | jq '.insightBanner, .recommendations
 | **2** | `applyDiscoverySlots`, discovery feedback | 4th item `isDiscovery`; toast on like |
 | **3** | `applyFatigueSwaps`, `artist-adjacency.json` | insight banner + `isSwap` |
 | **4** | All `client/src/components/*`, `App.tsx` | 5-min demo script |
-| **5** | `server/index.ts` CORS, Render env vars | `curl` health + `/start` on Render URL |
+| **5** | `server/railway.json`, CORS, Railway env vars | `curl` health + `/start` on Railway URL |
 | **6** | `sessionClient.ts`, `vercel.json`, `VITE_API_URL` | Vercel URL loads queue; no CORS errors |
 
 ---

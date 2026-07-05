@@ -1,6 +1,6 @@
 import type { SessionResponse } from '../types/session';
 
-/** Dev: empty → Vite proxy `/api`. Prod: set VITE_API_URL on Vercel (Render backend URL). */
+/** Dev: empty → Vite proxy `/api`. Prod: set VITE_API_URL on Vercel (Railway backend URL). */
 const API_ROOT = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 const BASE = `${API_ROOT}/api/session`;
 

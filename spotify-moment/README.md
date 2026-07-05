@@ -33,8 +33,10 @@ MVP prototype for session-aware Spotify recommendations.
 - Component split: Sidebar, PlayerBar, TrackList, ContextCard, etc.
 - Spotify green `#1ed760` for actions; pill buttons; row hover `#282828`
 
-### Phase 5 — Deploy backend (Render)
-See [../Docs/implementation.md](../Docs/implementation.md#9-phase-5--deploy-backend-on-render)
+### Phase 5 — Deploy backend (Railway)
+See [../Docs/implementation.md](../Docs/implementation.md#9-phase-5--deploy-backend-on-railway)
+
+**Railway settings:** Root Directory `spotify-moment/server` · Variables `OPENAI_API_KEY`, `CLIENT_URL` · Generate public domain
 
 ### Phase 6 — Deploy frontend (Vercel)
 See [../Docs/implementation.md](../Docs/implementation.md#10-phase-6--deploy-frontend-on-vercel)
