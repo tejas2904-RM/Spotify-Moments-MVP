@@ -33,10 +33,11 @@ MVP prototype for session-aware Spotify recommendations.
 - Component split: Sidebar, PlayerBar, TrackList, ContextCard, etc.
 - Spotify green `#1ed760` for actions; pill buttons; row hover `#282828`
 
-### Phase 5 — Deploy backend (Railway)
-See [../Docs/implementation.md](../Docs/implementation.md#9-phase-5--deploy-backend-on-railway)
+### Phase 5 — Deploy backend (Koyeb / Fly.io / Railway)
 
-**Railway settings:** Root Directory `spotify-moment/server` · Variables `OPENAI_API_KEY`, `CLIENT_URL` · Generate public domain
+See **[server/DEPLOY-BACKEND.md](./server/DEPLOY-BACKEND.md)** — **Koyeb recommended** (free, GitHub + Dockerfile).
+
+Quick Koyeb: Dockerfile path `spotify-moment/server/Dockerfile` · Port `8000` · Env `OPENAI_API_KEY`, `CLIENT_URL`
 
 ### Phase 6 — Deploy frontend (Vercel)
 See [../Docs/implementation.md](../Docs/implementation.md#10-phase-6--deploy-frontend-on-vercel)
