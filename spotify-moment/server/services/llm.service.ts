@@ -83,9 +83,11 @@ explanations (object trackId->string), insightBanner (optional), sessionMessage 
   }
 
   const data = (await res.json()) as {
-    choices: { message: { content: string } }[];
+    choices?: { message?: { content?: string } }[];
   };
-  return JSON.parse(data.choices[0].message.content) as LlmAnalysis;
+  const content = data.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error('OpenAI returned empty content');
+  return JSON.parse(content) as LlmAnalysis;
 }
 
 async function callGemini(payload: unknown, apiKey: string): Promise<LlmAnalysis> {

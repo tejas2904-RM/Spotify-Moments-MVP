@@ -2,33 +2,27 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import sessionRoutes from './routes/session.routes.js';
+import { loadJson } from './services/dataLoader.js';
 
 const app = express();
 
-const allowedOrigins = new Set(
-  (process.env.CLIENT_URL ?? '')
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
-);
-
-// Local dev: any localhost port (Vite may use 5173, 5174, etc.)
-// Production: set CLIENT_URL to your Vercel URL (comma-separated for previews)
+// MVP: allow all browser origins (Vercel previews, custom domains, localhost)
 app.use(
   cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
-      if (allowedOrigins.has(origin)) return callback(null, true);
-      if (/^https:\/\/[\w.-]+\.vercel\.app$/.test(origin)) return callback(null, true);
-      callback(null, false);
-    },
+    origin: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
   })
 );
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'spotify-moment' });
+  res.json({
+    ok: true,
+    service: 'spotify-moment',
+    tracks: loadJson<unknown[]>('tracks.json').length,
+    hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY),
+  });
 });
 
 app.use('/api/session', sessionRoutes);
@@ -39,9 +33,11 @@ app.use((_req, res) => {
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({
-    error: err instanceof Error ? err.message : 'Internal server error',
-  });
+  if (!res.headersSent) {
+    res.status(500).json({
+      error: err instanceof Error ? err.message : 'Internal server error',
+    });
+  }
 });
 
 const PORT = Number(process.env.PORT) || 3001;

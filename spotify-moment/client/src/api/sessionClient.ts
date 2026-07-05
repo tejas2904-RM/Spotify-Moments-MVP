@@ -1,7 +1,11 @@
 import type { SessionResponse } from '../types/session';
 
 /** Dev: empty → Vite proxy `/api`. Prod: set VITE_API_URL on Vercel (Railway backend URL). */
-const API_ROOT = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+function normalizeApiRoot(raw: string | undefined): string {
+  return (raw ?? '').trim().replace(/^["']|["']$/g, '').replace(/\/$/, '');
+}
+
+const API_ROOT = normalizeApiRoot(import.meta.env.VITE_API_URL);
 
 function apiBase(): string {
   if (import.meta.env.PROD && !API_ROOT) {

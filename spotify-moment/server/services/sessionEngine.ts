@@ -1,17 +1,15 @@
-import tracks from '../data/tracks.json' with { type: 'json' };
-import taste from '../data/taste.json' with { type: 'json' };
-import adjacency from '../data/artist-adjacency.json' with { type: 'json' };
 import type {
   RecommendationItem,
   SessionState,
   SignalType,
   Track,
 } from '../types/session.types.js';
-import { analyzeSession, parseRefineKeywords } from './llm.service.js';
+import { analyzeSession, fallbackAnalysis, parseRefineKeywords } from './llm.service.js';
+import { loadJson } from './dataLoader.js';
 
-const TRACKS = tracks as Track[];
-const TASTE = taste as { preferredGenres: string[]; preferredArtists: string[] };
-const ADJACENCY = adjacency as Record<string, string[]>;
+const TRACKS = loadJson<Track[]>('tracks.json');
+const TASTE = loadJson<{ preferredGenres: string[]; preferredArtists: string[] }>('taste.json');
+const ADJACENCY = loadJson<Record<string, string[]>>('artist-adjacency.json');
 const FATIGUE_THRESHOLD = 3;
 
 function scoreTrack(track: Track, session: SessionState): number {
@@ -209,6 +207,22 @@ function getTimeBasedLabel(): string {
   return 'Late Night';
 }
 
+function applyLlmResult(session: SessionState, llm: Awaited<ReturnType<typeof analyzeSession>>): void {
+  if (llm.contextLabel) session.contextLabel = llm.contextLabel;
+  if (llm.contextConfidence) session.contextConfidence = llm.contextConfidence;
+  if (llm.sessionConstraints) {
+    session.sessionConstraints = { ...session.sessionConstraints, ...llm.sessionConstraints };
+  }
+  if (llm.sessionMessage) session.sessionMessage = llm.sessionMessage;
+  if (llm.insightBanner) session.insightBanner = llm.insightBanner;
+  if (llm.explanations) {
+    session.recommendations = session.recommendations.map((r) => ({
+      ...r,
+      reason: llm.explanations![r.id] ?? r.reason,
+    }));
+  }
+}
+
 async function enrichWithLlm(session: SessionState, refineText?: string): Promise<void> {
   session.isAnalyzing = true;
 
@@ -220,40 +234,12 @@ async function enrichWithLlm(session: SessionState, refineText?: string): Promis
 
   try {
     const [llm] = await Promise.all([llmPromise, minDelay]);
-
-    if (llm.contextLabel) session.contextLabel = llm.contextLabel;
-    if (llm.contextConfidence) session.contextConfidence = llm.contextConfidence;
-    if (llm.sessionConstraints) {
-      session.sessionConstraints = { ...session.sessionConstraints, ...llm.sessionConstraints };
-    }
-    if (llm.sessionMessage) session.sessionMessage = llm.sessionMessage;
-    if (llm.insightBanner) session.insightBanner = llm.insightBanner;
-
-    if (llm.explanations) {
-      session.recommendations = session.recommendations.map((r) => ({
-        ...r,
-        reason: llm.explanations![r.id] ?? r.reason,
-      }));
-    }
+    applyLlmResult(session, llm);
   } catch (err) {
     console.warn('LLM enrichment failed', err);
   } finally {
     session.isAnalyzing = false;
   }
-}
-
-const START_LLM_BUDGET_MS = 6_000;
-
-async function enrichWithLlmBudgeted(
-  session: SessionState,
-  budgetMs: number,
-  refineText?: string
-): Promise<void> {
-  await Promise.race([
-    enrichWithLlm(session, refineText),
-    new Promise<void>((resolve) => setTimeout(resolve, budgetMs)),
-  ]);
-  session.isAnalyzing = false;
 }
 
 export async function startSession(session: SessionState): Promise<void> {
@@ -263,8 +249,9 @@ export async function startSession(session: SessionState): Promise<void> {
   applyDiscoverySlots(session);
   applyFatigueSwaps(session);
   updateFamiliarityScore(session);
-  // Cap LLM wait on start so Railway/Vercel don't timeout on cold deploys
-  await enrichWithLlmBudgeted(session, START_LLM_BUDGET_MS);
+  session.isAnalyzing = false;
+  // Instant response on start — LLM runs on first user interaction
+  applyLlmResult(session, fallbackAnalysis(session));
 }
 
 export async function handleSignal(
