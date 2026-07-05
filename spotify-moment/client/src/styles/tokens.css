@@ -1,0 +1,40 @@
+:root {
+  /* Surfaces */
+  --spotify-black: #000000;
+  --spotify-bg: #121212;
+  --spotify-surface: #181818;
+  --spotify-surface-mid: #1f1f1f;
+  --spotify-panel: #282828;
+  --spotify-border: #333333;
+
+  /* Brand */
+  --spotify-green: #1ed760;
+  --spotify-green-hover: #1abc54;
+  --spotify-green-legacy: #1db954;
+  --spotify-green-muted: rgba(29, 185, 84, 0.2);
+
+  /* Text */
+  --text-base: #ffffff;
+  --text-subdued: #b3b3b3;
+  --text-muted: #a7a7a7;
+  --text-disabled: #535353;
+
+  /* Semantic */
+  --accent-insight: #fcd34d;
+  --accent-insight-bg: rgba(245, 158, 11, 0.12);
+  --accent-insight-border: rgba(245, 158, 11, 0.35);
+  --accent-swap: #f59e0b;
+  --accent-swap-bg: rgba(245, 158, 11, 0.08);
+  --danger: #e91429;
+
+  /* Layout */
+  --sidebar-width: 280px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 500px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+}
