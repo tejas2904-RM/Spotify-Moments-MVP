@@ -16,6 +16,19 @@ app.use(
 );
 app.use(express.json());
 
+app.get('/', (_req, res) => {
+  res.json({ ok: true, service: 'spotify-moment', hint: 'Use /api/health or /api/session/start' });
+});
+
+app.get('/health', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'spotify-moment',
+    tracks: loadJson<unknown[]>('tracks.json').length,
+    hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY),
+  });
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
