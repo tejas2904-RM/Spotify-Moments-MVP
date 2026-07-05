@@ -1656,9 +1656,10 @@ git push origin main
 
 | Setting | Value |
 |---------|-------|
-| **Root Directory** | `spotify-moment/server` |
-| **Config file path** | `/spotify-moment/server/railway.json` (if not auto-detected) |
-| **Start Command** | `npm start` (set in `railway.json` or leave to Nixpacks/Railpack) |
+| **Root Directory** | Leave empty (repo root) **or** set to `spotify-moment/server` |
+| **Config file path** | `/railway.json` (repo root) if deploying from root; `/spotify-moment/server/railway.json` if root dir is `spotify-moment/server` |
+
+The repo includes a **root `package.json` + `railway.json`** so Railpack detects Node and runs the server even when Root Directory is not set.
 
 4. **Variables** tab → add:
 
@@ -1909,7 +1910,7 @@ curl -s http://localhost:3001/api/session | jq '.insightBanner, .recommendations
 | CORS error | Ensure `CLIENT_URL` is set on Railway; `*.vercel.app` is allowed by default |
 | CORS error on Vercel | `VITE_API_URL` must be Railway HTTPS URL; redeploy Vercel after env change |
 | Frontend shows connection error | Backend not running locally, or `VITE_API_URL` wrong / missing on Vercel |
-| Railway deploy fails | Set **Root Directory** to `spotify-moment/server`; check logs for missing `tsx` |
+| Railway deploy fails / "could not determine how to build" | Ensure repo root has `package.json` + `railway.json`, **or** set Root Directory to `spotify-moment/server` |
 | Session resets on refresh | In-memory store — expected for MVP |
 | `VITE_API_URL` not applied | Vite bakes env at build time — redeploy Vercel after changing the variable |
 | LLM returns invalid JSON | Use `response_format: json_object` (OpenAI) or tighten system prompt |
