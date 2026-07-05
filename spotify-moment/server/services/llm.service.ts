@@ -70,6 +70,7 @@ async function callOpenAI(payload: unknown, apiKey: string): Promise<LlmAnalysis
           role: 'system',
           content: `You are Spotify Moment session AI. Return JSON only.
 Never modify long-term taste. Session scope only.
+LISTEN_COMPLETE means the user finished a 30s preview — treat as positive engagement.
 Keys: contextLabel, contextConfidence (0-100), sessionConstraints (optional),
 explanations (object trackId->string), insightBanner (optional), sessionMessage (optional).`,
         },
@@ -137,6 +138,8 @@ export function fallbackAnalysis(
       explanations[r.id] = 'Discovery pick — testing something adjacent to your vibe.';
     } else if (session.recentSignals.some((s) => s.includes('SKIP') && s.includes('early'))) {
       explanations[r.id] = 'Recommended because you skipped slower tracks this session.';
+    } else if (session.recentSignals.some((s) => s.startsWith('LISTEN_COMPLETE'))) {
+      explanations[r.id] = 'You listened through the preview — keeping this session energy.';
     } else if (session.recentSignals.some((s) => s.startsWith('LIKE') || s.startsWith('SAVE'))) {
       explanations[r.id] = `Similar to artists you've engaged with this session.`;
     } else {

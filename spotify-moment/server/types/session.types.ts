@@ -17,6 +17,7 @@ export interface Track {
   isDiscoveryCandidate: boolean;
   isFemaleArtist?: boolean;
   durationSec: number;
+  previewUrl?: string;
 }
 
 export interface SessionConstraints {
@@ -38,6 +39,7 @@ export interface RecommendationItem {
   isDiscovery: boolean;
   isSwap: boolean;
   reason: string;
+  previewUrl?: string;
 }
 
 export interface SessionState {

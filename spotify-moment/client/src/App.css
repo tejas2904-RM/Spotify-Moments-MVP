@@ -204,6 +204,17 @@
   height: 100%;
   background: var(--spotify-green);
   border-radius: var(--radius-sm);
+  transition: width 0.15s linear;
+}
+
+.preview-hint {
+  color: var(--spotify-green);
+  font-size: 0.75rem;
+  margin: 0 0 8px;
+}
+
+.preview-hint-muted {
+  color: var(--text-subdued);
 }
 
 .controls {

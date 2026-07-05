@@ -19,6 +19,7 @@ function App() {
     replay,
     play,
     refine,
+    listenComplete,
   } = useSession();
 
   const nowPlaying = useMemo(
@@ -113,10 +114,11 @@ npm run dev`}</pre>
 
         <PlayerBar
           track={nowPlaying}
-          onSkip={() => skip(nowPlaying.id, 8)}
+          onSkip={(sec) => skip(nowPlaying.id, sec)}
           onLike={() => like(nowPlaying.id)}
           onSave={() => save(nowPlaying.id)}
           onReplay={() => replay(nowPlaying.id)}
+          onPreviewComplete={() => listenComplete(nowPlaying.id)}
         />
 
         <TrackList

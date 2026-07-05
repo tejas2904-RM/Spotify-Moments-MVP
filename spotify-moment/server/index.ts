@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import sessionRoutes from './routes/session.routes.js';
 import { loadJson } from './services/dataLoader.js';
+import { warmPreviewCache } from './services/preview.service.js';
 
 const app = express();
 
@@ -58,4 +59,5 @@ const HOST = process.env.HOST ?? '0.0.0.0';
 
 app.listen(PORT, HOST, () => {
   console.log(`Server listening on ${HOST}:${PORT}`);
+  warmPreviewCache();
 });

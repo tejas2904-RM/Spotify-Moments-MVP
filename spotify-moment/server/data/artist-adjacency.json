@@ -1,5 +1,7 @@
 {
   "Taylor Swift": ["Sabrina Carpenter", "Gracie Abrams"],
   "The Weeknd": ["The Kid LAROI", "Post Malone"],
-  "Dua Lipa": ["Doja Cat", "Anne-Marie"]
+  "Dua Lipa": ["Doja Cat", "Anne-Marie"],
+  "Sabrina Carpenter": ["Olivia Rodrigo", "Gracie Abrams"],
+  "Olivia Rodrigo": ["Sabrina Carpenter", "Gracie Abrams"]
 }

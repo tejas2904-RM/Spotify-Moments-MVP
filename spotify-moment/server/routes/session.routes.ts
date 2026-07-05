@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import {
   createSession,
   getLatestSession,
@@ -6,6 +6,15 @@ import {
   updateSession,
 } from '../services/sessionStore.js';
 import { startSession, handleSignal, handleRefine } from '../services/sessionEngine.js';
+import { withPreview } from '../services/preview.service.js';
+import type { SessionResponse } from '../types/session.types.js';
+
+function sendSession(res: Response, session: SessionResponse) {
+  res.json({
+    ...session,
+    recommendations: session.recommendations.map(withPreview),
+  });
+}
 
 const router = Router();
 
@@ -14,7 +23,7 @@ router.post('/start', async (req, res, next) => {
     const session = createSession(req.body?.deviceType ?? 'desktop');
     await startSession(session);
     updateSession(session);
-    res.json(toResponse(session));
+    sendSession(res, toResponse(session));
   } catch (err) {
     next(err);
   }
@@ -33,7 +42,7 @@ router.post('/signal', async (req, res, next) => {
       skipAtSec: req.body.skipAtSec ?? 0,
     });
     updateSession(session);
-    res.json(toResponse(session));
+    sendSession(res, toResponse(session));
   } catch (err) {
     next(err);
   }
@@ -48,7 +57,7 @@ router.post('/refine', async (req, res, next) => {
 
     await handleRefine(session, req.body.text ?? '');
     updateSession(session);
-    res.json(toResponse(session));
+    sendSession(res, toResponse(session));
   } catch (err) {
     next(err);
   }
@@ -59,7 +68,7 @@ router.get('/', (_req, res) => {
   if (!session) {
     return res.status(404).json({ error: 'No session.' });
   }
-  res.json(toResponse(session));
+  sendSession(res, toResponse(session));
 });
 
 export default router;

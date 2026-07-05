@@ -44,6 +44,9 @@ export function useSession() {
   const play = (trackId: string) =>
     refresh(() => api.sendSignal({ type: 'PLAY', trackId }));
 
+  const listenComplete = (trackId: string) =>
+    refresh(() => api.sendSignal({ type: 'LISTEN_COMPLETE', trackId }));
+
   const refine = (text: string) => refresh(() => api.refineSession(text));
 
   return {
@@ -56,6 +59,7 @@ export function useSession() {
     save,
     replay,
     play,
+    listenComplete,
     refine,
   };
 }

@@ -6,6 +6,7 @@ import type {
 } from '../types/session.types.js';
 import { analyzeSession, fallbackAnalysis, parseRefineKeywords } from './llm.service.js';
 import { loadJson } from './dataLoader.js';
+import { getPreviewUrl } from './preview.service.js';
 
 const TRACKS = loadJson<Track[]>('tracks.json');
 const TASTE = loadJson<{ preferredGenres: string[]; preferredArtists: string[] }>('taste.json');
@@ -43,20 +44,26 @@ function scoreTrack(track: Track, session: SessionState): number {
   return score;
 }
 
+function trackToRec(track: Track, overrides: Partial<RecommendationItem> = {}): RecommendationItem {
+  return {
+    id: track.id,
+    title: track.title,
+    artist: track.artist,
+    energy: track.energy,
+    previewUrl: getPreviewUrl(track.id),
+    isDiscovery: false,
+    isSwap: false,
+    reason: 'Matched to your listening taste.',
+    ...overrides,
+  };
+}
+
 function buildQueue(session: SessionState): RecommendationItem[] {
   return [...TRACKS]
     .map((track) => ({ track, score: scoreTrack(track, session) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 12)
-    .map(({ track }) => ({
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
-      energy: track.energy,
-      isDiscovery: false,
-      isSwap: false,
-      reason: 'Matched to your listening taste.',
-    }));
+    .map(({ track }) => trackToRec(track));
 }
 
 /** Phase 2 — every 4th slot is a discovery track */
@@ -99,15 +106,10 @@ function pickDiscoveryTrack(
 
   if (!candidate) return current;
 
-  return {
-    id: candidate.id,
-    title: candidate.title,
-    artist: candidate.artist,
-    energy: candidate.energy,
+  return trackToRec(candidate, {
     isDiscovery: true,
-    isSwap: false,
     reason: 'Discovery Track — exploring adjacent to your current vibe.',
-  };
+  });
 }
 
 function handleDiscoveryFeedback(
@@ -161,15 +163,11 @@ function applyFatigueSwaps(session: SessionState): void {
       session.insightBanner = `You've listened to ${item.artist} several times today. Trying something similar instead.`;
     }
 
-    return {
-      id: swapTrack.id,
-      title: swapTrack.title,
-      artist: swapTrack.artist,
-      energy: swapTrack.energy,
+    return trackToRec(swapTrack, {
       isDiscovery: item.isDiscovery,
       isSwap: true,
       reason: `Similar to ${item.artist} — easing repetition.`,
-    };
+    });
   });
 }
 
@@ -298,7 +296,11 @@ export async function handleSignal(
       }
       break;
     case 'LISTEN_COMPLETE':
-      session.recentSignals.push('LISTEN_COMPLETE');
+      if (track) {
+        session.recentSignals.push(`LISTEN_COMPLETE ${track.title} energy-${track.energy}`);
+      } else {
+        session.recentSignals.push('LISTEN_COMPLETE');
+      }
       break;
   }
 

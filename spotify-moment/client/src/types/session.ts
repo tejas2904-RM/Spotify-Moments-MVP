@@ -25,6 +25,7 @@ export interface RecommendationItem {
   isDiscovery: boolean;
   isSwap: boolean;
   reason: string;
+  previewUrl?: string;
 }
 
 export interface SessionResponse {
