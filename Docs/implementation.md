@@ -1624,6 +1624,7 @@ services:
   - type: web
     name: spotify-moment-api
     runtime: node
+    plan: free
     rootDir: spotify-moment/server
     buildCommand: npm install
     startCommand: npm start
