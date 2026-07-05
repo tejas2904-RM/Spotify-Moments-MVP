@@ -1689,14 +1689,16 @@ https://YOUR-SERVICE.onrender.com
 
 ### Step 9.5 — Optional: `render.yaml` (Blueprint)
 
-For repeatable deploys, add `spotify-moment/server/render.yaml`:
+Render looks for **`render.yaml` at the repository root** by default (not inside `server/`).
+
+The repo includes **`render.yaml`** at the root with `rootDir: spotify-moment/server`:
 
 ```yaml
 services:
   - type: web
     name: spotify-moment-api
     runtime: node
-    rootDir: server
+    rootDir: spotify-moment/server
     buildCommand: npm install
     startCommand: npm start
     envVars:
@@ -1708,7 +1710,14 @@ services:
         value: "20"
 ```
 
-> Adjust `rootDir` if your repo layout differs.
+**Create the Blueprint in Render:**
+
+1. Dashboard → **New** → **Blueprint**
+2. Connect [Spotify-Moments-MVP](https://github.com/tejas2904-RM/Spotify-Moments-MVP)
+3. **Blueprint Path:** leave as `render.yaml` (repo root) — or set `spotify-moment/server/render.yaml` only if you keep a copy there
+4. Apply → add `OPENAI_API_KEY` when prompted
+
+> **Manual Web Service (no Blueprint):** skip `render.yaml`; set **Root Directory** to `spotify-moment/server` in the service settings instead.
 
 ### Step 9.6 — Phase 5 verification
 
