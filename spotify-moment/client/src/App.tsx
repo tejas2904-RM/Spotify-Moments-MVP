@@ -49,10 +49,15 @@ function App() {
         <h1>Spotify Moment</h1>
         <p className="error">{error}</p>
         {isProd ? (
-          <p className="hint">
-            Check <strong>VITE_API_URL</strong> in Vercel env vars (your Railway URL) and{' '}
-            <strong>CLIENT_URL</strong> on Railway (your Vercel URL). Redeploy both after changing.
-          </p>
+          <>
+            <p className="hint">
+              <strong>VITE_API_URL</strong> = Railway base URL only (no <code>/api</code> suffix).
+              Example: <code>https://your-app.up.railway.app</code>
+            </p>
+            <p className="hint">
+              Test in browser: <code>{import.meta.env.VITE_API_URL || '…'}/api/health</code>
+            </p>
+          </>
         ) : (
           <>
             <p className="hint">

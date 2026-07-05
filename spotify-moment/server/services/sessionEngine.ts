@@ -235,9 +235,25 @@ async function enrichWithLlm(session: SessionState, refineText?: string): Promis
         reason: llm.explanations![r.id] ?? r.reason,
       }));
     }
+  } catch (err) {
+    console.warn('LLM enrichment failed', err);
   } finally {
     session.isAnalyzing = false;
   }
+}
+
+const START_LLM_BUDGET_MS = 6_000;
+
+async function enrichWithLlmBudgeted(
+  session: SessionState,
+  budgetMs: number,
+  refineText?: string
+): Promise<void> {
+  await Promise.race([
+    enrichWithLlm(session, refineText),
+    new Promise<void>((resolve) => setTimeout(resolve, budgetMs)),
+  ]);
+  session.isAnalyzing = false;
 }
 
 export async function startSession(session: SessionState): Promise<void> {
@@ -247,7 +263,8 @@ export async function startSession(session: SessionState): Promise<void> {
   applyDiscoverySlots(session);
   applyFatigueSwaps(session);
   updateFamiliarityScore(session);
-  await enrichWithLlm(session);
+  // Cap LLM wait on start so Railway/Vercel don't timeout on cold deploys
+  await enrichWithLlmBudgeted(session, START_LLM_BUDGET_MS);
 }
 
 export async function handleSignal(

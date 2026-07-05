@@ -20,7 +20,7 @@ app.use(
       if (!origin) return callback(null, true);
       if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
       if (allowedOrigins.has(origin)) return callback(null, true);
-      if (/^https:\/\/[\w-]+\.vercel\.app$/.test(origin)) return callback(null, true);
+      if (/^https:\/\/[\w.-]+\.vercel\.app$/.test(origin)) return callback(null, true);
       callback(null, false);
     },
   })
@@ -32,6 +32,17 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/session', sessionRoutes);
+
+app.use((_req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
+
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    error: err instanceof Error ? err.message : 'Internal server error',
+  });
+});
 
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = process.env.HOST ?? '0.0.0.0';
