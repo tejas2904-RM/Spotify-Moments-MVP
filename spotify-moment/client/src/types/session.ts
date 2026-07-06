@@ -39,6 +39,7 @@ export interface SessionResponse {
   recommendations: RecommendationItem[];
   nowPlaying: { trackId: string; progress: number } | null;
   artistPlayCounts: Record<string, number>;
+  recentSignals: string[];
   toast?: string;
   insightBanner?: string;
   sessionMessage?: string;

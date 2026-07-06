@@ -3,6 +3,7 @@ import { ExplorationMeter } from './ExplorationMeter';
 import { FamiliarityBar } from './FamiliarityBar';
 import { InsightBanner } from './InsightBanner';
 import { RefinePanel } from './RefinePanel';
+import { SignalChips } from './SignalChips';
 import type { SessionResponse } from '../types/session';
 
 interface Props {
@@ -29,6 +30,7 @@ export function Sidebar({ state, onRefine }: Props) {
         <ExplorationMeter level={state.explorationLevel} />
         <FamiliarityBar score={state.familiarityScore} />
         <InsightBanner message={state.insightBanner} />
+        <SignalChips signals={state.recentSignals} />
       </div>
 
       <RefinePanel onRefine={onRefine} sessionMessage={state.sessionMessage} />

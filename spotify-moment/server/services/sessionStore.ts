@@ -38,7 +38,9 @@ export function updateSession(session: SessionState): void {
 }
 
 export function toResponse(session: SessionState): SessionResponse {
-  const { sessionEnergy, recentSignals, pendingLlm, lastFatigueArtist, ...rest } =
-    session;
-  return rest;
+  const { sessionEnergy, pendingLlm, lastFatigueArtist, ...rest } = session;
+  return {
+    ...rest,
+    recentSignals: session.recentSignals.slice(-5),
+  };
 }

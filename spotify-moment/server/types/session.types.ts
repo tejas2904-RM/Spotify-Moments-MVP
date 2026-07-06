@@ -65,5 +65,5 @@ export interface SessionState {
 
 export type SessionResponse = Omit<
   SessionState,
-  'sessionEnergy' | 'recentSignals' | 'pendingLlm' | 'lastFatigueArtist'
+  'sessionEnergy' | 'pendingLlm' | 'lastFatigueArtist'
 >;

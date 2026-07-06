@@ -1,4 +1,7 @@
 import { DiscoveryBadge } from './DiscoveryBadge';
+import { EnergyMeter } from './EnergyMeter';
+import { IconHeart, IconReplay, IconSave, IconSkip } from './PlayerIcons';
+import { TrackArt } from './TrackArt';
 import type { RecommendationItem } from '../types/session';
 import { useAudioPreview } from '../hooks/useAudioPreview';
 
@@ -33,16 +36,17 @@ export function PlayerBar({
     onReplay();
   };
 
+  const progressPct = Math.round(progress * 100);
+
   return (
-    <section className="card player">
+    <section className="card player player--hero">
       <p className="label">Now Playing</p>
       <div className="player-inner">
-        <div className="album-art" aria-hidden="true">
-          <span className="album-art-icon">♪</span>
-        </div>
+        <TrackArt artist={track.artist} energy={track.energy} size="lg" />
         <div className="player-meta">
           <div className="now-playing-title">
             <h3>{track.title}</h3>
+            <EnergyMeter energy={track.energy} />
             {track.isDiscovery && <DiscoveryBadge />}
             {track.isSwap && <span className="swap-badge">Similar swap</span>}
           </div>
@@ -53,21 +57,27 @@ export function PlayerBar({
           {status === 'unavailable' && (
             <p className="preview-hint preview-hint-muted">Preview unavailable · signals still work</p>
           )}
-          <div className="progress">
-            <div className="progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+          <div className="progress progress--hero">
+            <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+            {status === 'playing' && (
+              <span className="progress-thumb" style={{ left: `${progressPct}%` }} />
+            )}
           </div>
           <div className="controls">
             <button type="button" className="btn-secondary btn-icon" onClick={handleReplay} title="Replay">
-              ↺
+              <IconReplay />
             </button>
-            <button type="button" className="btn-secondary" onClick={handleSkip} title="Skip">
-              ⏭ Skip
+            <button type="button" className="btn-secondary btn-with-icon" onClick={handleSkip} title="Skip">
+              <IconSkip />
+              <span>Skip</span>
             </button>
-            <button type="button" className="btn-secondary" onClick={onLike} title="Like">
-              ♥ Like
+            <button type="button" className="btn-secondary btn-with-icon" onClick={onLike} title="Like">
+              <IconHeart />
+              <span>Like</span>
             </button>
-            <button type="button" className="btn-secondary" onClick={onSave} title="Save">
-              💾 Save
+            <button type="button" className="btn-secondary btn-with-icon" onClick={onSave} title="Save">
+              <IconSave />
+              <span>Save</span>
             </button>
           </div>
         </div>

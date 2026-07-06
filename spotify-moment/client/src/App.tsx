@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import { useSession } from './hooks/useSession';
 import { AnalysisOverlay } from './components/AnalysisOverlay';
+import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { PlayerBar } from './components/PlayerBar';
+import { SessionHint } from './components/SessionHint';
 import { SessionToast } from './components/SessionToast';
 import { Sidebar } from './components/Sidebar';
 import { TrackList } from './components/TrackList';
+import { getTimeGreeting } from './utils/greeting';
 import './App.css';
 
 function App() {
@@ -22,6 +25,8 @@ function App() {
     listenComplete,
   } = useSession();
 
+  const greeting = useMemo(() => getTimeGreeting(), []);
+
   const nowPlaying = useMemo(
     () =>
       state?.recommendations.find((t) => t.id === nowPlayingId) ??
@@ -34,13 +39,16 @@ function App() {
     [state?.recommendations]
   );
 
+  const sessionActivityKey = useMemo(
+    () =>
+      state
+        ? `${state.contextLabel}-${state.explorationLevel}-${listKey}`
+        : '',
+    [state, listKey]
+  );
+
   if (loading) {
-    return (
-      <div className="app-loading">
-        <div className="spinner" />
-        <p>Starting session…</p>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (error) {
@@ -88,12 +96,7 @@ npm run dev`}</pre>
   }
 
   if (!nowPlaying) {
-    return (
-      <div className="app-loading">
-        <div className="spinner" />
-        <p>Loading queue…</p>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -106,8 +109,9 @@ npm run dev`}</pre>
       <main className="main">
         <header className="main-header">
           <div>
-            <h1 className="greeting">Good afternoon</h1>
+            <h1 className="greeting">{greeting}</h1>
             <p className="greeting-sub">Your session adapts as you listen</p>
+            <SessionHint sessionKey={sessionActivityKey} />
           </div>
           <span className="device-pill">{state.deviceType}</span>
         </header>

@@ -1,4 +1,6 @@
 import { DiscoveryBadge } from './DiscoveryBadge';
+import { EnergyMeter } from './EnergyMeter';
+import { TrackArt } from './TrackArt';
 import type { RecommendationItem } from '../types/session';
 
 interface Props {
@@ -26,16 +28,19 @@ export function TrackList({ tracks, nowPlayingId, listKey, onPlay }: Props) {
             onClick={() => onPlay(track.id)}
           >
             <span className="rank">{i + 1}</span>
-            <div className="track-row-art" aria-hidden="true" />
+            <TrackArt artist={track.artist} energy={track.energy} size="sm" />
             <div className="track-info">
               <p className="track-title">
                 {track.title}
-                <span className="energy">E{track.energy}</span>
+                <EnergyMeter energy={track.energy} />
                 {track.isDiscovery && <DiscoveryBadge />}
                 {track.isSwap && <span className="swap-badge">Swap</span>}
               </p>
               <p className="track-artist">{track.artist}</p>
-              <p className="track-reason">{track.reason}</p>
+              <p className="track-reason">
+                <span className="reason-label">AI</span>
+                {track.reason}
+              </p>
             </div>
           </li>
         ))}
